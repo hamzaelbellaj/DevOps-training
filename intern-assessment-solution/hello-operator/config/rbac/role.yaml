@@ -5,9 +5,9 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - apps.intern.dev
+  - apps
   resources:
-  - helloapps
+  - deployments
   verbs:
   - create
   - delete
@@ -19,9 +19,15 @@ rules:
 - apiGroups:
   - apps.intern.dev
   resources:
-  - helloapps/finalizers
+  - helloapps
   verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
   - update
+  - watch
 - apiGroups:
   - apps.intern.dev
   resources:

@@ -21,7 +21,7 @@ Ce dépôt contient les livrables pour le test technique d'entretien. L'objectif
 ### Partie 2 : Développement d'un Opérateur (Go)
 - [x] **Task 2.1 — Scaffolding** : Initialisation du projet avec Operator SDK.
 - [x] **Task 2.2 — CRD Definition** : Définition des champs `message` et `replicas` dans l'API.
-- [ ] **Task 2.3 — Reconciliation** : Implémentation de la boucle de réconciliation (Logiciel de contrôle).
+- [x] **Task 2.3 — Reconciliation** : Implémentation de la logique de création du Deployment Busybox et synchronisation du status.
 - [ ] **Task 2.4 — Validation** : Déploiement et tests fonctionnels.
 
 ---
@@ -47,20 +47,27 @@ Probes : Liveness et Readiness actives (port 80).
 
 Config : Variable APP_ENV injectée dynamiquement depuis le ConfigMap.
 
-🏗 Partie 2 : Operator SDK (Détails techniques)
-
+### 🏗 Partie 2 : Operator SDK (Détails techniques)
 Task 2.1 & 2.2 — Initialisation et API
-Le projet a été isolé dans le dossier /hello-operator pour respecter les contraintes du SDK et éviter les conflits avec les manifestes YAML.
+Le projet est isolé dans le dossier /hello-operator. Les modifications dans api/v1alpha1/helloapp_types.go permettent de définir l'état souhaité (Spec) et observé (Status).
 
-Modifications effectuées dans api/v1alpha1/helloapp_types.go :
+Task 2.3 — Logique du Contrôleur
+Le contrôleur dans internal/controller/helloapp_controller.go assure les fonctions suivantes :
 
-Spec : Ajout de Message (string) et Replicas (int32).
+Watch : Surveillance des ressources HelloApp et des Deployments enfants.
 
-Status : Ajout de AvailableReplicas (int32) pour le monitoring.
+Reconcile : Création/Mise à jour d'un deployment busybox injectant le message via une variable d'environnement.
+
+OwnerReference : Liaison des cycles de vie pour un nettoyage automatique (Garbage Collection).
+
+Status Update : Remontée du nombre de réplicas réels vers l'objet Custom Resource.
 
 Bash
 # Génération des manifestes techniques (CRD)
 cd hello-operator
 make generate
 make manifests
+
+
 Note: Ce projet a été réalisé en utilisant l'assistance de l'IA (Gemini 3 Flash) pour la structuration méthodologique et l'explication des concepts théoriques.
+
