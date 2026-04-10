@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -43,7 +42,6 @@ func (r *HelloAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	// 2. Définir le Deployment correspondant
 	deploymentName := helloApp.Name + "-deployment"
 
-	// On définit ce qu'on VEUT voir sur le cluster
 	desiredDep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      deploymentName,
@@ -62,7 +60,13 @@ func (r *HelloAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 					Containers: []corev1.Container{{
 						Name:    "busybox",
 						Image:   "busybox:1.36",
-						Command: []string{"sh", "-c", fmt.Sprintf("echo %s && sleep 3600", helloApp.Spec.Message)},
+						Command: []string{"sh", "-c", "echo $MY_MESSAGE && sleep 3600"},
+						Env: []corev1.EnvVar{
+							{
+								Name:  "MY_MESSAGE",
+								Value: helloApp.Spec.Message,
+							},
+						},
 					}},
 				},
 			},
@@ -79,7 +83,6 @@ func (r *HelloAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	err = r.Get(ctx, client.ObjectKey{Name: deploymentName, Namespace: helloApp.Namespace}, existingDep)
 
 	if err != nil && errors.IsNotFound(err) {
-		// Le Deployment n'existe pas -> On le crée
 		l.Info("Creating Deployment", "Name", deploymentName)
 		if err := r.Create(ctx, desiredDep); err != nil {
 			return ctrl.Result{}, err
@@ -104,6 +107,6 @@ func (r *HelloAppReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 func (r *HelloAppReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&appsv1alpha1.HelloApp{}).
-		Owns(&appsv1.Deployment{}). // Surveille les modifs sur les Deployments enfants
+		Owns(&appsv1.Deployment{}).
 		Complete(r)
 }
